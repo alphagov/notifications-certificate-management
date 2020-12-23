@@ -67,7 +67,7 @@ def sign_certificate():
     ca = PRIVATE_CAS.get("vpn")
     ca_id = ca["ca_id"]
     account_id = ca["account_id"]
-    ca_arn=f"arn:aws:acm-pca:{AWS_REGION}:{account_id}:certificate-authority/{ca_id}"
+    ca_arn = f"arn:aws:acm-pca:{AWS_REGION}:{account_id}:certificate-authority/{ca_id}"
     csr = request.get_data()
 
     ca_client = client('acm-pca', config=AWS_CONFIG)
@@ -90,7 +90,7 @@ def sign_certificate():
             CertificateArn=cert_arn,
         )
     except botocore.exceptions.WaiterError as e:
-        logger.error(f"Certificate {cert_arn} was not issued within 180 seconds")
+        logger.error(f"Certificate {cert_arn} was not issued within 180 seconds: {e}")
         abort(500)
 
     cert = ca_client.get_certificate(
