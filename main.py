@@ -50,7 +50,6 @@ def crl():
         key = s3.Object(bucket_name, file_name)
         crl_data = key.get()['Body'].read()
     except botocore.exceptions.ClientError as error:
-        # check whether this should be logger.exception or logger.error
         logger.error(error)
         abort(500)
 
