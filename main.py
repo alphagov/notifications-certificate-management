@@ -1,24 +1,23 @@
 import logging
+import os
 
 from flask import Flask, Response, abort, request
 from boto3 import client, resource
 import botocore
+
+from config import configs
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 app = Flask(__name__)
 
+notify_environment = os.environ['NOTIFY_ENVIRONMENT']
+app.config.from_object(configs[notify_environment])
 
-AWS_REGION = "eu-west-2"
-AWS_CONFIG = botocore.config.Config(region_name=AWS_REGION)
-PRIVATE_CAS = {
-    "vpn": {
-        "ca_id": "fb0bf875-66a5-4447-bae3-403c457bda2d",
-        "revocation_bucket": "gds-cb-vjv982-vpn-ca-revoc",
-        "account_id": "144489291306"
-    }
-}
+AWS_REGION = app.config["AWS_REGION"]
+AWS_CONFIG = app.config["AWS_CONFIG"]
+PRIVATE_CAS = app.config["PRIVATE_CAS"]
 
 
 @app.route('/healthcheck')
