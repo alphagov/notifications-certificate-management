@@ -9,7 +9,7 @@ An HTTP app that:
 
 ## Why do we have this app
 
-We need to let the Mobile Network Operators (MNOs) get issued certificates signed by us for both TLS and VPN connections. We want to automate this process as much as possible so we avoid manual work every couple of months when certificates need rotating. This is especially important as their are multiple mobile networks to do this for. By having an HTTP endpoint for this the MNOs can request and get new certificates themselves.
+We need to let the Mobile Network Operators (MNOs) get issued certificates signed by us for both TLS and VPN connections. We want to automate this process as much as possible so we avoid manual work every couple of months when certificates need rotating. This is especially important as there are multiple mobile networks to do this for. By having an HTTP endpoint for this the MNOs can request and get new certificates themselves.
 
 We need to let the mobile networks have access to our CRLs. The CRLs are publically accessible from S3. However the cell broadcast infrastructure for the mobile networks does not have access to the public internet so they can not get them from S3. Therefore, we run this app so they can get the CRLs from S3 via our network.
 
