@@ -6,6 +6,7 @@ DOCKER_IMAGE_TAG = latest
 DOCKER_IMAGE_NAME = ${DOCKER_IMAGE}:${DOCKER_IMAGE_TAG}
 
 NOTIFY_ENVIRONMENT ?= development 
+PORT ?= 8000
 
 .PHONY: test
 test:
@@ -18,6 +19,7 @@ build-docker-image:
 .PHONY: run-with-docker
 run-with-docker: build-docker-image
 	docker run -it --rm \
-		-p 8000:8000 \
+		-p ${PORT}:${PORT} \
+		-e PORT=${PORT} \
 		-e NOTIFY_ENVIRONMENT=${NOTIFY_ENVIRONMENT} \
 		${DOCKER_IMAGE_NAME}
