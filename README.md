@@ -20,6 +20,7 @@ To run this app locally, you need to make sure it has permissions to talk to the
 ```
 pip install -r requirements_for_test.txt
 export FLASK_APP=main.py
+export NOTIFY_ENVIRONMENT=development
 gds aws cell-broadcast-staging-admin -- flask run
 ```
 
