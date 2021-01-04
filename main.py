@@ -26,10 +26,10 @@ def healthcheck():
     return 'ok'
 
 
-@app.route('/vpn/crl')
-def crl():
+@app.route('/<ca_name>/crl')
+def crl(ca_name):
     """
-    Returns a certificate revocation list for the VPN certificate authority
+    Returns a certificate revocation list for one of our private certificate authorities
 
     Mimics the HTTP response and headers of a GET request to the public S3 bucket for this
     file
@@ -39,7 +39,10 @@ def crl():
     so if you need to view it, you need to use
     `openssl crl -inform DER -in path-to-crl-file -text -noout`
     """
-    ca = PRIVATE_CAS.get("vpn")
+    ca = PRIVATE_CAS.get(ca_name)
+    if not ca:
+        abort(404)
+
     ca_id = ca["ca_id"]
     bucket_name = ca["revocation_bucket"]
     file_name = f"crl/{ca_id}.crl"
@@ -55,14 +58,17 @@ def crl():
     return Response(crl_data, mimetype='application/pkix-crl')
 
 
-@app.route('/vpn/sign-certificate', methods=["POST"])
-def sign_certificate():
+@app.route('/<ca_name>/sign-certificate', methods=["POST"])
+def sign_certificate(ca_name):
     """
     Issues and returns a certificate for a certificate signing request
 
     curl -X POST --data-binary "@csr.txt" http://127.0.0.1:5000/vpn/sign-certificate
     """
-    ca = PRIVATE_CAS.get("vpn")
+    ca = PRIVATE_CAS.get(ca_name)
+    if not ca:
+        abort(404)
+
     ca_id = ca["ca_id"]
     account_id = ca["account_id"]
     ca_arn = f"arn:aws:acm-pca:{AWS_REGION}:{account_id}:certificate-authority/{ca_id}"
