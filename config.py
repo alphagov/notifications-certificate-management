@@ -14,9 +14,9 @@ class Staging(Config):
             "account_id": "144489291306"
         },
         "tls": {
-            "ca_id": "TBC",
-            "revocation_bucket": "TBC",
-            "account_id": "TBC"
+            "ca_id": "89a1067f-8bc0-48b3-8e85-bab92785c6a0",
+            "revocation_bucket": "gds-cb-jysgde-tls-ca-revoc",
+            "account_id": "144489291306"
         }
     }
 
