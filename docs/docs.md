@@ -84,10 +84,10 @@ HTTP 200 with `application/json` content type. The response will contain your ce
 
 ### Example
 
-Create a CSR for `ee.vpn.notify.staging` and store it in `csr.txt`. Then:
+Create a PEM CSR for `ee.vpn.notify.staging` and store it in `csr.pem`. Then:
 
 ```sh
-curl --user my-username:my-password -X POST --data-binary "@csr.txt" http://127.0.0.1:5000/vpn/sign-certificate > my-certificate.txt
+curl --user my-username:my-password -X POST --data-binary "@csr.pem" http://127.0.0.1:5000/vpn/sign-certificate > my-certificate.txt
 ```
 
 
