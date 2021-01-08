@@ -61,9 +61,9 @@ def crl(ca_name):
 @app.route('/<ca_name>/sign-certificate', methods=["POST"])
 def sign_certificate(ca_name):
     """
-    Issues and returns a certificate for a certificate signing request
+    Issues and returns a certificate for a PEM certificate signing request
 
-    curl -X POST --data-binary "@csr.txt" http://127.0.0.1:5000/vpn/sign-certificate
+    curl -X POST --data-binary "@csr.pem" http://127.0.0.1:5000/vpn/sign-certificate
     """
     ca = PRIVATE_CAS.get(ca_name)
     if not ca:
