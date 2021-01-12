@@ -1,4 +1,4 @@
-import botocore
+import botocore.config
 
 
 class Config(object):
@@ -41,7 +41,24 @@ class Production(Config):
     }
 
 
+class Test(Config):
+    TESTING = True
+    PRIVATE_CAS = {
+        "vpn": {
+            "ca_id": "1",
+            "revocation_bucket": "test_vpn_bucket",
+            "account_id": "1234"
+        },
+        "tls": {
+            "ca_id": "2",
+            "revocation_bucket": "test_tls_bucket",
+            "account_id": "5678"
+        }
+    }
+
+
 configs = {
+    'test': Test,
     'development': Development,
     'staging': Staging,
     'production': Production,

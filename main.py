@@ -1,32 +1,24 @@
 import logging
 import os
 
-from flask import Flask, Response, abort, request
-from boto3 import client, resource
 import botocore
+from boto3 import client, resource
+from flask import Blueprint, Flask, Response, abort, current_app, request
 
 from config import configs
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-app = Flask(__name__)
-
-notify_environment = os.environ['NOTIFY_ENVIRONMENT']
-app.config.from_object(configs[notify_environment])
-
-AWS_REGION = app.config["AWS_REGION"]
-AWS_CONFIG = app.config["AWS_CONFIG"]
-PRIVATE_CAS = app.config["PRIVATE_CAS"]
+main = Blueprint('main', __name__)
 
 
-@app.route('/healthcheck')
+@main.route('/healthcheck')
 def healthcheck():
     # what format should this be, should it be JSON
     return 'ok'
 
 
-@app.route('/<ca_name>/crl')
+@main.route('/<ca_name>/crl')
 def crl(ca_name):
     """
     Returns a certificate revocation list for one of our private certificate authorities
@@ -39,7 +31,7 @@ def crl(ca_name):
     so if you need to view it, you need to use
     `openssl crl -inform DER -in path-to-crl-file -text -noout`
     """
-    ca = PRIVATE_CAS.get(ca_name)
+    ca = current_app.config['PRIVATE_CAS'].get(ca_name)
     if not ca:
         abort(404)
 
@@ -58,23 +50,23 @@ def crl(ca_name):
     return Response(crl_data, mimetype='application/pkix-crl')
 
 
-@app.route('/<ca_name>/sign-certificate', methods=["POST"])
+@main.route('/<ca_name>/sign-certificate', methods=["POST"])
 def sign_certificate(ca_name):
     """
     Issues and returns a certificate for a PEM certificate signing request
 
     curl -X POST --data-binary "@csr.pem" http://127.0.0.1:5000/vpn/sign-certificate
     """
-    ca = PRIVATE_CAS.get(ca_name)
+    ca = current_app.config['PRIVATE_CAS'].get(ca_name)
     if not ca:
         abort(404)
 
     ca_id = ca["ca_id"]
     account_id = ca["account_id"]
-    ca_arn = f"arn:aws:acm-pca:{AWS_REGION}:{account_id}:certificate-authority/{ca_id}"
+    ca_arn = f"arn:aws:acm-pca:{current_app.config['AWS_REGION']}:{account_id}:certificate-authority/{ca_id}"
     csr = request.get_data()
 
-    ca_client = client('acm-pca', config=AWS_CONFIG)
+    ca_client = client('acm-pca', config=current_app.config['AWS_CONFIG'])
     response = ca_client.issue_certificate(
         CertificateAuthorityArn=ca_arn,
         Csr=csr,
@@ -103,3 +95,16 @@ def sign_certificate(ca_name):
     )
 
     return cert
+
+
+def create_app():
+    app = Flask(__name__)
+    notify_environment = os.environ['NOTIFY_ENVIRONMENT']
+    app.config.from_object(configs[notify_environment])
+
+    app.register_blueprint(main)
+
+    return app
+
+
+app = create_app()
