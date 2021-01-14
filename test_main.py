@@ -1,4 +1,7 @@
+from unittest.mock import Mock
+
 import boto3
+import botocore
 import pytest
 from flask import current_app, url_for
 from moto import mock_s3
@@ -70,3 +73,73 @@ def test_get_crl_returns_the_crl(client, ca_name):
     assert response.status_code == 200
     assert response.data.decode('utf-8') == 'This is a crl'
     assert response.mimetype == 'application/pkix-crl'
+
+
+def test_sign_certificate_returns_404_if_ca_name_is_unknown(client):
+    response = client.post(url_for('main.sign_certificate', ca_name='bad_name'))
+    assert response.status_code == 404
+
+
+@pytest.mark.parametrize('ca_name, expected_ca_arn', [
+    ('vpn', 'arn:aws:acm-pca:eu-west-2:1234:certificate-authority/1'),
+    ('tls', 'arn:aws:acm-pca:eu-west-2:5678:certificate-authority/2'),
+])
+def test_sign_certificate_returns_500_if_certificate_is_not_issued(client, mocker, ca_name, expected_ca_arn):
+    def raise_waiter_error(**kwargs):
+        raise botocore.exceptions.WaiterError('name', 'reason', 'last_response')
+
+    # mock the ca_client waiter to raise an error when waiting for the certificate -
+    # this is the error that would occur if a certificate was not issued within 180s
+    mock_ca_client = Mock(
+        issue_certificate=Mock(return_value={"CertificateArn": "my_cert_arn"}),
+        get_waiter=lambda _: Mock(wait=raise_waiter_error)
+    )
+    mocker.patch('main.client', return_value=mock_ca_client)
+
+    response = client.post(
+        url_for('main.sign_certificate', ca_name=ca_name),
+        data='my_csr.pem'
+    )
+
+    assert response.status_code == 500
+    mock_ca_client.issue_certificate.assert_called_once_with(
+        CertificateAuthorityArn=expected_ca_arn,
+        Csr=b'my_csr.pem',
+        SigningAlgorithm='SHA256WITHRSA',
+        Validity={
+            'Value': 365,
+            'Type': "DAYS"
+        }
+    )
+
+
+@pytest.mark.parametrize('ca_name, expected_ca_arn', [
+    ('vpn', 'arn:aws:acm-pca:eu-west-2:1234:certificate-authority/1'),
+    ('tls', 'arn:aws:acm-pca:eu-west-2:5678:certificate-authority/2'),
+])
+def test_sign_certificate_issues_certificate(client, mocker, ca_name, expected_ca_arn):
+    mock_ca_client = Mock(
+        issue_certificate=Mock(return_value={"CertificateArn": "my_cert_arn"}),
+        get_certificate=Mock(return_value={'Certificate': 'my_certificate', 'CertificateChain': 'my_chain'})
+    )
+    mocker.patch('main.client', return_value=mock_ca_client)
+
+    response = client.post(
+        url_for('main.sign_certificate', ca_name=ca_name),
+        data='my_csr.pem'
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {'Certificate': 'my_certificate', 'CertificateChain': 'my_chain'}
+    mock_ca_client.issue_certificate.assert_called_once_with(
+        CertificateAuthorityArn=expected_ca_arn,
+        Csr=b'my_csr.pem',
+        SigningAlgorithm='SHA256WITHRSA',
+        Validity={
+            'Value': 365,
+            'Type': "DAYS"
+        }
+    )
+    mock_ca_client.get_certificate.assert_called_once_with(
+        CertificateArn='my_cert_arn',
+        CertificateAuthorityArn=expected_ca_arn
+    )
