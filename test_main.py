@@ -1,3 +1,4 @@
+import base64
 from unittest.mock import Mock
 
 import boto3
@@ -75,8 +76,37 @@ def test_get_crl_returns_the_crl(client, ca_name):
     assert response.mimetype == 'application/pkix-crl'
 
 
+def test_sign_certificate_returns_401_if_basic_auth_creds_are_not_provided(client):
+    response = client.post(url_for('main.sign_certificate', ca_name='tls'))
+    assert response.status_code == 401
+
+
+def test_sign_certificate_returns_401_if_username_is_wrong(client):
+    invalid_credentials = base64.b64encode(b'me:vodafone_password').decode('utf-8')
+
+    response = client.post(
+        url_for('main.sign_certificate', ca_name='bad_name'),
+        headers={'Authorization': f'Basic {invalid_credentials}'}
+    )
+    assert response.status_code == 401
+
+
+def test_sign_certificate_returns_401_if_password_is_wrong(client):
+    invalid_credentials = base64.b64encode(b'ee:vodafone_password').decode('utf-8')
+
+    response = client.post(
+        url_for('main.sign_certificate', ca_name='bad_name'),
+        headers={'Authorization': f'Basic {invalid_credentials}'}
+    )
+    assert response.status_code == 401
+
+
 def test_sign_certificate_returns_404_if_ca_name_is_unknown(client):
-    response = client.post(url_for('main.sign_certificate', ca_name='bad_name'))
+    valid_credentials = base64.b64encode(b'ee:ee_password').decode('utf-8')
+    response = client.post(
+        url_for('main.sign_certificate', ca_name='bad_name'),
+        headers={'Authorization': f'Basic {valid_credentials}'}
+    )
     assert response.status_code == 404
 
 
@@ -96,9 +126,11 @@ def test_sign_certificate_returns_500_if_certificate_is_not_issued(client, mocke
     )
     mocker.patch('main.client', return_value=mock_ca_client)
 
+    valid_credentials = base64.b64encode(b'ee:ee_password').decode('utf-8')
     response = client.post(
         url_for('main.sign_certificate', ca_name=ca_name),
-        data='my_csr.pem'
+        data='my_csr.pem',
+        headers={'Authorization': f'Basic {valid_credentials}'}
     )
 
     assert response.status_code == 500
@@ -124,9 +156,11 @@ def test_sign_certificate_issues_certificate(client, mocker, ca_name, expected_c
     )
     mocker.patch('main.client', return_value=mock_ca_client)
 
+    valid_credentials = base64.b64encode(b'ee:ee_password').decode('utf-8')
     response = client.post(
         url_for('main.sign_certificate', ca_name=ca_name),
-        data='my_csr.pem'
+        data='my_csr.pem',
+        headers={'Authorization': f'Basic {valid_credentials}'}
     )
     assert response.status_code == 200
     assert response.get_json() == {'Certificate': 'my_certificate', 'CertificateChain': 'my_chain'}

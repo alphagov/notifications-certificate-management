@@ -1,15 +1,25 @@
+import hmac
 import logging
 import os
 
 import botocore
 from boto3 import client, resource
 from flask import Blueprint, Flask, Response, abort, current_app, request
+from flask_httpauth import HTTPBasicAuth
 
 from config import configs
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 main = Blueprint('main', __name__)
+auth = HTTPBasicAuth()
+
+
+@auth.verify_password
+def verify_password(username, password):
+    credentials = current_app.config['CREDENTIALS']
+    if username in credentials and hmac.compare_digest(credentials[username], password):
+        return username
 
 
 @main.route('/healthcheck')
@@ -51,11 +61,13 @@ def crl(ca_name):
 
 
 @main.route('/<ca_name>/sign-certificate', methods=["POST"])
+@auth.login_required
 def sign_certificate(ca_name):
     """
-    Issues and returns a certificate for a PEM certificate signing request
+    Issues and returns a certificate for a PEM certificate signing request.
+    This endpoint is protected with basic auth.
 
-    curl -X POST --data-binary "@csr.pem" http://127.0.0.1:5000/vpn/sign-certificate
+    curl --user my-username:my-password -X POST --data-binary "@csr.pem" http://127.0.0.1:5000/vpn/sign-certificate
     """
     ca = current_app.config['PRIVATE_CAS'].get(ca_name)
     if not ca:

@@ -1,9 +1,27 @@
+import os
+
 import botocore.config
 
 
 class Config(object):
     AWS_REGION = "eu-west-2"
     AWS_CONFIG = botocore.config.Config(region_name=AWS_REGION)
+
+    EE_USERNAME = os.environ['EE_USERNAME']
+    EE_PASSWORD = os.environ['EE_PASSWORD']
+    O2_USERNAME = os.environ['O2_USERNAME']
+    O2_PASSWORD = os.environ['O2_PASSWORD']
+    VODAFONE_USERNAME = os.environ['VODAFONE_USERNAME']
+    VODAFONE_PASSWORD = os.environ['VODAFONE_PASSWORD']
+    THREE_USERNAME = os.environ['THREE_USERNAME']
+    THREE_PASSWORD = os.environ['THREE_PASSWORD']
+
+    CREDENTIALS = {
+        EE_USERNAME: EE_PASSWORD,
+        O2_USERNAME: O2_PASSWORD,
+        VODAFONE_USERNAME: VODAFONE_PASSWORD,
+        THREE_USERNAME: THREE_PASSWORD,
+    }
 
 
 class Staging(Config):
