@@ -5,12 +5,12 @@ DOCKER_IMAGE = ${DOCKER_USER_NAME}/notifications-certificate-management
 DOCKER_IMAGE_TAG = latest
 DOCKER_IMAGE_NAME = ${DOCKER_IMAGE}:${DOCKER_IMAGE_TAG}
 
-NOTIFY_ENVIRONMENT ?= development 
+NOTIFY_ENVIRONMENT ?= development
 PORT ?= 8000
 
 .PHONY: test
 test:
-	flake8 .
+	./run_tests.sh
 
 .PHONY: build-docker-image
 build-docker-image:
