@@ -7,25 +7,6 @@ import pytest
 from flask import current_app, url_for
 from moto import mock_s3
 
-from main import create_app
-
-
-@pytest.fixture(scope='session')
-def app():
-    app = create_app()
-    ctx = app.app_context()
-    ctx.push()
-
-    yield app
-
-    ctx.pop()
-
-
-@pytest.fixture
-def client(app):
-    with app.test_request_context(), app.test_client() as client:
-        yield client
-
 
 def test_healthcheck(client):
     response = client.get(url_for('main.healthcheck'))
@@ -110,11 +91,31 @@ def test_sign_certificate_returns_404_if_ca_name_is_unknown(client):
     assert response.status_code == 404
 
 
+def test_sign_certificate_returns_403_if_cn_is_forbidden_for_mno(client, mocker, csr_for_unknown_mno):
+    mock_ca_client = Mock(issue_certificate=Mock())
+    mocker.patch('main.client', return_value=mock_ca_client)
+
+    valid_credentials = base64.b64encode(b'ee:ee_password').decode('utf-8')
+    response = client.post(
+        url_for('main.sign_certificate', ca_name='vpn'),
+        headers={'Authorization': f'Basic {valid_credentials}'},
+        data=csr_for_unknown_mno
+    )
+    assert response.status_code == 403
+    assert not mock_ca_client.called
+
+
 @pytest.mark.parametrize('ca_name, expected_ca_arn', [
     ('vpn', 'arn:aws:acm-pca:eu-west-2:1234:certificate-authority/1'),
     ('tls', 'arn:aws:acm-pca:eu-west-2:5678:certificate-authority/2'),
 ])
-def test_sign_certificate_returns_500_if_certificate_is_not_issued(client, mocker, ca_name, expected_ca_arn):
+def test_sign_certificate_returns_500_if_certificate_is_not_issued(
+    client,
+    mocker,
+    ca_name,
+    expected_ca_arn,
+    ee_valid_csr,
+):
     def raise_waiter_error(**kwargs):
         raise botocore.exceptions.WaiterError('name', 'reason', 'last_response')
 
@@ -129,14 +130,14 @@ def test_sign_certificate_returns_500_if_certificate_is_not_issued(client, mocke
     valid_credentials = base64.b64encode(b'ee:ee_password').decode('utf-8')
     response = client.post(
         url_for('main.sign_certificate', ca_name=ca_name),
-        data='my_csr.pem',
+        data=ee_valid_csr,
         headers={'Authorization': f'Basic {valid_credentials}'}
     )
 
     assert response.status_code == 500
     mock_ca_client.issue_certificate.assert_called_once_with(
         CertificateAuthorityArn=expected_ca_arn,
-        Csr=b'my_csr.pem',
+        Csr=ee_valid_csr,
         SigningAlgorithm='SHA256WITHRSA',
         Validity={
             'Value': 365,
@@ -149,7 +150,7 @@ def test_sign_certificate_returns_500_if_certificate_is_not_issued(client, mocke
     ('vpn', 'arn:aws:acm-pca:eu-west-2:1234:certificate-authority/1'),
     ('tls', 'arn:aws:acm-pca:eu-west-2:5678:certificate-authority/2'),
 ])
-def test_sign_certificate_issues_certificate(client, mocker, ca_name, expected_ca_arn):
+def test_sign_certificate_issues_certificate(client, mocker, ca_name, expected_ca_arn, ee_valid_csr):
     mock_ca_client = Mock(
         issue_certificate=Mock(return_value={"CertificateArn": "my_cert_arn"}),
         get_certificate=Mock(return_value={'Certificate': 'my_certificate', 'CertificateChain': 'my_chain'})
@@ -159,14 +160,14 @@ def test_sign_certificate_issues_certificate(client, mocker, ca_name, expected_c
     valid_credentials = base64.b64encode(b'ee:ee_password').decode('utf-8')
     response = client.post(
         url_for('main.sign_certificate', ca_name=ca_name),
-        data='my_csr.pem',
+        data=ee_valid_csr,
         headers={'Authorization': f'Basic {valid_credentials}'}
     )
     assert response.status_code == 200
     assert response.get_json() == {'Certificate': 'my_certificate', 'CertificateChain': 'my_chain'}
     mock_ca_client.issue_certificate.assert_called_once_with(
         CertificateAuthorityArn=expected_ca_arn,
-        Csr=b'my_csr.pem',
+        Csr=ee_valid_csr,
         SigningAlgorithm='SHA256WITHRSA',
         Validity={
             'Value': 365,

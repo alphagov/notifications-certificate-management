@@ -1,3 +1,4 @@
+import json
 import os
 
 import botocore.config
@@ -21,6 +22,12 @@ class Config(object):
         O2_USERNAME: O2_PASSWORD,
         VODAFONE_USERNAME: VODAFONE_PASSWORD,
         THREE_USERNAME: THREE_PASSWORD,
+    }
+    ALLOWED_COMMON_NAMES = {
+        EE_USERNAME: json.loads(os.environ.get('EE_COMMON_NAMES', '[]')),
+        O2_USERNAME: json.loads(os.environ.get('O2_COMMON_NAMES', '[]')),
+        VODAFONE_USERNAME: json.loads(os.environ.get('VODAFONE_COMMON_NAMES', '[]')),
+        THREE_USERNAME: json.loads(os.environ.get('THREE_COMMON_NAMES', '[]')),
     }
 
 

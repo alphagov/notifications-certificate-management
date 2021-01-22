@@ -4,6 +4,8 @@ import os
 
 import botocore
 from boto3 import client, resource
+from cryptography import x509
+from cryptography.x509.oid import NameOID
 from flask import Blueprint, Flask, Response, abort, current_app, request
 from flask_httpauth import HTTPBasicAuth
 
@@ -73,10 +75,19 @@ def sign_certificate(ca_name):
     if not ca:
         abort(404)
 
+    mno = auth.current_user()
+    allowed_common_names = current_app.config['ALLOWED_COMMON_NAMES'][mno]
+
+    csr = request.get_data()
+    parsed_csr = x509.load_pem_x509_csr(csr)
+    common_name_value = parsed_csr.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+
+    if common_name_value not in allowed_common_names:
+        abort(403)
+
     ca_id = ca["ca_id"]
     account_id = ca["account_id"]
     ca_arn = f"arn:aws:acm-pca:{current_app.config['AWS_REGION']}:{account_id}:certificate-authority/{ca_id}"
-    csr = request.get_data()
 
     ca_client = client('acm-pca', config=current_app.config['AWS_CONFIG'])
     response = ca_client.issue_certificate(
