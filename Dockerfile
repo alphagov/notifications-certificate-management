@@ -1,5 +1,12 @@
 FROM python:3.8.7-alpine3.12
 
+RUN apk add \
+        gcc \
+        musl-dev \
+        python3-dev \
+        libffi-dev \
+        openssl-dev
+
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
 
