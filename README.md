@@ -19,16 +19,22 @@ To run this app locally, you need to make sure it has permissions to talk to the
 
 ```
 pip install -r requirements_for_test.txt
+
 export FLASK_APP=main.py
 export NOTIFY_ENVIRONMENT=development
 export EE_USERNAME=ee
 export EE_PASSWORD=ee_password
+export EE_COMMON_NAMES='["ee-allowed-common-name"]'
 export O2_USERNAME=o2
 export O2_PASSWORD=o2_password
+export O2_COMMON_NAMES='["o2-allowed-common-name"]'
 export VODAFONE_USERNAME=vodafone
 export VODAFONE_PASSWORD=vodafone_password
+export VODAFONE_COMMON_NAMES='["vodafone-allowed-common-name"]'
 export THREE_USERNAME=three
 export THREE_PASSWORD=three_password
+export THREE_COMMON_NAMES='["three-allowed-common-name"]'
+
 gds aws cell-broadcast-staging-admin -- flask run
 ```
 
