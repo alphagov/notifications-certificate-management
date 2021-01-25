@@ -15,12 +15,20 @@ We need to let the mobile networks have access to our CRLs. The CRLs are publica
 
 ## Set up and run locally
 
-To run this app locally, you need to make sure it has permissions to talk to the AWS Certificate Manager service. For local development we suggest you use the cell broadcast staging AWS account for this as shown in this example. 
+To run this app locally, you need to make sure it has permissions to talk to the AWS Certificate Manager service. For local development we suggest you use the cell broadcast staging AWS account for this as shown in this example.
 
 ```
 pip install -r requirements_for_test.txt
 export FLASK_APP=main.py
 export NOTIFY_ENVIRONMENT=development
+export EE_USERNAME=ee
+export EE_PASSWORD=ee_password
+export O2_USERNAME=o2
+export O2_PASSWORD=o2_password
+export VODAFONE_USERNAME=vodafone
+export VODAFONE_PASSWORD=vodafone_password
+export THREE_USERNAME=three
+export THREE_PASSWORD=three_password
 gds aws cell-broadcast-staging-admin -- flask run
 ```
 
