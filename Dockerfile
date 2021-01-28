@@ -1,6 +1,6 @@
 FROM python:3.8.7-alpine3.12
 
-RUN apk add \
+RUN apk add --no-cache \
         gcc \
         musl-dev \
         python3-dev \
