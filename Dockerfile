@@ -1,4 +1,4 @@
-FROM python:3.8.7-alpine3.12 AS builder
+FROM python:3.10.0b2-alpine3.12 AS builder
 
 RUN apk add --no-cache \
         gcc \
@@ -11,7 +11,7 @@ RUN apk add --no-cache \
 COPY requirements.txt /
 RUN pip install --user -r /requirements.txt
 
-FROM python:3.8.7-alpine3.12
+FROM python:3.10.0b2-alpine3.12
 
 COPY --from=builder /root/.local /root/.local
 COPY config.py main.py run.sh ./app/
