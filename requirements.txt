@@ -1,5 +1,5 @@
 Flask==1.1.2
 Flask-HTTPAuth==4.2.0
-boto3==1.16.38
+boto3==1.21.23
 cryptography==3.4.7
 gunicorn==20.1.0
