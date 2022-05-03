@@ -12,6 +12,15 @@ PORT ?= 8000
 test:
 	./run_tests.sh
 
+.PHONY: bootstrap
+bootstrap: ## Set up everything to run the app
+	pip3 install -r requirements_for_test.txt
+
+.PHONY: freeze-requirements
+freeze-requirements: ## Pin all requirements including sub dependencies into requirements.txt
+	pip install --upgrade pip-tools
+	pip-compile requirements.in
+
 .PHONY: build-docker-image
 build-docker-image:
 	docker build -t ${DOCKER_IMAGE_NAME} .
