@@ -24,8 +24,6 @@ flask-httpauth==4.6.0
     # via -r requirements.in
 gunicorn==20.1.0
     # via -r requirements.in
-importlib-metadata==4.11.3
-    # via flask
 itsdangerous==2.1.2
     # via flask
 jinja2==3.1.1
@@ -44,12 +42,10 @@ s3transfer==0.5.2
     # via boto3
 six==1.16.0
     # via python-dateutil
-urllib3==1.26.9
+urllib3==1.26.18
     # via botocore
 werkzeug==2.1.1
     # via flask
-zipp==3.8.0
-    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
