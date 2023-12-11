@@ -14,7 +14,7 @@ cffi==1.15.0
     # via cryptography
 click==8.1.2
     # via flask
-cryptography==36.0.2
+cryptography==41.0.6
     # via -r requirements.in
 flask==2.1.1
     # via
